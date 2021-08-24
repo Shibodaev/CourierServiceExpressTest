@@ -1,12 +1,17 @@
 /* eslint-env node */
 const path = require('path');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
-const {CleanWebpackPlugin} = require('clean-webpack-plugin');
+const {
+  CleanWebpackPlugin
+} = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetWebpackPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserWebpackPlugin = require('terser-webpack-plugin');
-const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+const {
+  BundleAnalyzerPlugin
+} = require('webpack-bundle-analyzer');
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = !isDev;
@@ -31,8 +36,7 @@ const optimization = () => {
 const filename = ext => isDev ? `[name].${ext}` : `[name].[hash].${ext}`;
 
 const cssLoaders = extra => {
-  const loaders = [
-    {
+  const loaders = [{
       loader: MiniCssExtractPlugin.loader,
       options: {
         hmr: isDev,
@@ -82,19 +86,23 @@ const jsLoaders = () => {
 
 const plugins = () => {
   const base = [
-    new HTMLWebpackPlugin({
-      template: './index.html',
-      minify: {
-        collapseWhitespace: isProd
-      }
-    }),
+    // new HTMLWebpackPlugin({
+    //   // template: './index.html',
+    //   minify: {
+    //     collapseWhitespace: isProd
+    //   }
+    // }),
     new CleanWebpackPlugin(),
     new CopyPlugin(
-     [{from: path.resolve(__dirname, 'src/favicon.ico'), to: path.resolve(__dirname, 'dist')}]
+      [{
+        from: path.resolve(__dirname, 'src/favicon.ico'),
+        to: path.resolve(__dirname, 'dist')
+      }]
     ),
     new MiniCssExtractPlugin({
       filename: filename('css')
-    })
+    }),    
+    new VueLoaderPlugin()
   ]
 
   if (isProd) {
@@ -107,12 +115,10 @@ const plugins = () => {
 module.exports = {
   context: path.resolve(__dirname, 'src'),
   mode: 'development',
-  entry: {
-    main: ['@babel/polyfill'],
-  },
+  entry: './app.js',
   output: {
-    filename: filename('js'),
-    path: path.resolve(__dirname, 'dist')
+      filename: '[name].[contenthash].js', /* выход в папку DIST С именем и хешем */
+      // path: path.resolve(__dirname, 'dist')
   },
   resolve: {
     extensions: ['.js', '.json', '.png'],
@@ -123,28 +129,29 @@ module.exports = {
   },
   optimization: optimization(),
   devServer: {
-    port: 4200,
-    hot: isDev
-  },
+    // contentBase: path.join(__dirname, 'dist'),
+    // compress: true,
+    port: 9000
+ },
   devtool: isDev ? 'source-map' : '',
   plugins: plugins(),
   module: {
     rules: [
       {
-        test: /\.css$/,
-        use: cssLoaders()
-      },
-      {
-        test: /\.less$/,
-        use: cssLoaders('less-loader')
-      },
-      {
-        test: /\.s[ac]ss$/,
-        use: cssLoaders('sass-loader')
+        test: /\.scss$/,
+        use: [
+       'style-loader',
+       'css-loader',
+       'sass-loader'
+      ]
       },
       {
         test: /\.(png|jpg|svg|gif)$/,
         use: ['file-loader']
+      },
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader',
       },
       {
         test: /\.(ttf|woff|woff2|eot)$/,
@@ -171,7 +178,7 @@ module.exports = {
           options: babelOptions('@babel/preset-typescript')
         }
       },
-     
+
     ]
   }
 }
